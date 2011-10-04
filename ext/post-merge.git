@@ -53,7 +53,7 @@ class PostMerge
       options[:install_script] = g_config['install-script'] if g_config.has_key? 'install-script'
 
       #Fire up instance from AMI
-      #server = Puppet::Face[:node, '0.0.1'].bootstrap_cloudscale options
+      server = Puppet::Face[:node, '0.0.1'].bootstrap_cloudscale options
     end
   end
 end
