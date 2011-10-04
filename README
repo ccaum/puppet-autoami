@@ -1,0 +1,23 @@
+Automatically Generating AMIs using Puppet
+
+Setup
+-----
+
+Including this module in your puppet master's modulepath.  Use pluginsync to get the face installed on all the nodes you want to use it on.
+
+Make sure the node with your git/subversion/etc puppet repository is able an mcollective client and has the /etc/mcollective/client.cfg file readable by the user that will executing the post-commit or post-merge script.
+
+Set up the /etc/cloudscale.conf file in the following format
+
+[group]
+image   = 'ami-f10a1998'
+type    = 'm1.small'
+region  = 'us-east-1'
+keypair = 'mykey_rsa'
+keyfile = '/root/.ec2/mykey_rsa.pem'
+master  = 'puppet.mydomain.com'
+login   = 'root'
+pe-install-tarball = /tmp/puppet-enterprise-1.2.1-all.tar.gz
+pe-answer-file = /tmp/pe-answers.txt
+pe-version = 1.2.1
+install-script = puppet-enterprise

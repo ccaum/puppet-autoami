@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'puppet'
+require 'puppet/face'
+require 'puppet/cloudpack'
+require 'parseconfig'
+require 'fileutils'
+
+config_file = '/etc/cloudscale.conf'
+cache_dir = '/var/cache/cloudscale'
+
+class PostMerge
+  attr_accessor :state, :config
+
+  def initialize
+    raise "Cannot find config file #{config_file}" unless File.exists? config_file
+
+    begin
+      @config = ParseConfig.new(config_file)
+    rescue => e
+      puts "Cannot parse config file  #{config_file}: #{e}"
+    end
+    
+    @state = File.exists? "#{cache_dir}/state.yaml" ? YAML.load "#{cache_dir}/state.yaml" : Hash.new
+  end
+
+  def save_state(state)
+    FileUtils.mkdir_p cache_dir unless File.directory? cache_dir
+
+    File.open("#{cache_dir}/state.yaml", 'w') do |f|
+      f.write state.to_yaml
+    end
+  end
+
+  def load_instances
+    config.groups.each do |group|
+      g_config = config.params[group]
+
+      options = { :image   => g_config['image'],
+                  :type    => g_config['type'],
+                  :keypair => g_config['keypair'],
+                  :keyfile => g_config['keyfile'],
+                  :login   => g_config['login'],
+                  :server  => g_config['master'],
+                  :certname => "#{group}"
+      }
+
+      options[:region] = g_config['region'] if g_config.has_key? 'region'
+      options[:installer_payload] = g_config['pe-install-tarball'] if g_config.has_key? 'pe-install-tarball'
+      options[:installer_answers] = g_config['pe-answer-file'] if g_config.has_key? 'pe-answer-file'
+      options[:pe_version] = g_config['pe-version'] if g_config.has_key? 'pe-version'
+      options[:install_script] = g_config['install-script'] if g_config.has_key? 'install-script'
+
+      #Fire up instance from AMI
+      #server = Puppet::Face[:node, '0.0.1'].bootstrap_cloudscale options
+    end
+  end
+end
+
+pg = PostGit.new
+PostGit.load_instances
