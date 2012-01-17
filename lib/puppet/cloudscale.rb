@@ -22,23 +22,13 @@ module Puppet::CloudPack
         EOT
         required
       end
-    end
 
-    def list_instances(connection, parameter, value)
-      yaml = IO.read('/var/lib/puppet/cloudscale/db.marshal')
-      state = YAML.load( yaml )
-
-      state['running_instances']
-    end
-
-    def load_instances(options)
-      Puppet.info "Connecting to #{options[:platform]} ..."
-      connection =  create_connection(options)
-      Puppet.info "Connecting to #{options[:platform]} ... Done"
-
-      config.images.each do |image|
-        options['image'] = image
-        Puppet::Face[:node_aws, '0.0.1'].bootstrap options
+      action.option '--terminate' do
+        summary 'Terminate the instance after generating the AMI'
+        description <<-EOT
+          The instance can be terminated after it has been 
+          snapshotted and the new AMI is produced
+        EOT
       end
     end
 
@@ -84,9 +74,9 @@ module Puppet::CloudPack
 
       image_data = connection.create_image(instance.identity, "v_#{options[:manifest_version]}", options[:description])
 
-      #We're done with out instace. Get rid of it, unless told not to
+      #If told, destroy the instance
       if options[:terminate]
-        Puppet::Face[:node, '0.0.1'].terminate(server)
+        Puppet::Face[:node_aws, :current].terminate(server)
       end
 
       image_data.body['imageId']
