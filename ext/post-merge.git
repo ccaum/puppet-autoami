@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'rubygems'
+require 'mysql'
 require 'puppet'
 require 'puppet/face'
 require 'puppet/cloudpack'
@@ -15,23 +16,23 @@ class PostMerge
     @config_file = '/etc/cloudscale.conf'
     @cache_dir = '/var/cache/cloudscale'
 
-    raise "Cannot find config file #{@config_file}" unless File.exists? @config_file
-
     begin
-      @config = ParseConfig.new(@config_file)
+      @dbh = Mysql.new host='localhost', user='autoami', password='autoami'
     rescue => e
-      puts "Cannot parse config file  #{@config_file}: #{e}"
+      raise "Cannot connect to database: #{e}"
     end
     
     @nodes = Array.new
   end
 
-  def add_node(server)
-    @nodes << server
+  def add_node(server, group)
+    @nodes << { 'dns_name' => server, 'group' => group }
   end
 
   def save
-    File.open("#{@cache_dir}/nodes.yaml", 'w') { |f| f.puts @nodes.to_yaml }
+    @nodes.each do |props|
+      dbh.select_db('autoami').query("INSERT INTO nodes ( dns_name, ami_group ) VALUES ( #{props['dns_name']}, #{props['group']}")
+    end
   end
 
   def load_instances

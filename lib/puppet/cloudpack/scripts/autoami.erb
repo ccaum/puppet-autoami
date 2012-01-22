@@ -6,7 +6,7 @@ set -u
 set -e
 
 function configure_puppet() {
-  cat >/etc/puppet/puppet.conf <<'EOFPUPPETCONF'
+  cat >/etc/puppetlabs/puppet/puppet.conf <<'EOFPUPPETCONF'
 [main]
   logdir = /var/log/puppet
   rundir = /var/run/puppet
@@ -15,7 +15,6 @@ function configure_puppet() {
   pluginsync = true
   report = true
   server = <%= options[:server] %>
-  environment = <%= options[:environment] %>
   <% if options[:puppetagent_certname] %>
   certname = <%= options[:puppetagent_certname] %>
   <% end %>
@@ -35,7 +34,7 @@ EOFPUPPETDEFAULT
 }
 
 function start_puppet() {
-  /etc/init.d/puppet start
+  /etc/init.d/pe-puppet-agent start
 }
 
 function provision_puppet() {
