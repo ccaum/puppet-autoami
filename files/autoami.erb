@@ -1,0 +1,16 @@
+#!/bin/bash
+# This script is intended to be used with the install action
+# of puppet-cloudpack
+
+<% if options[:puppetagent_certname] %>
+  export CONFDIR=`puppet --configprint confdir`
+
+  if grep certname $CONFDIR/puppet.conf
+  then
+    sed  '/^.*certname.*=.*$/c  certname = <%= options[:puppetagent_certname] %>' $CONFDIR/puppet.conf
+  else
+    echo "  certname = <% options[:puppetagnt_certname] %>" >> $CONFDIR/puppet.conf
+  fi
+<% end %>
+
+puppet agent -t&
