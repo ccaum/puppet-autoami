@@ -8,6 +8,6 @@ class autoami::db( $db_user, $db_password, $db_name = 'autoami' ) {
     user     => $db_user,
     password => $db_password,
     grant    => all,
-    sql      => "${::libdir}/autoami.sql",
+    sql      => "${autoami::confdir}/autoami.sql",
   }
 }
