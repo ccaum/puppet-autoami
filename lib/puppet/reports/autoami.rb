@@ -10,7 +10,7 @@ Puppet::Reports.register_report(:autoami) do
 
   def process
     begin
-      config_file = '/etc/cloudscale.conf'
+      config_file = '/etc/autoami.conf'
       config = ParseConfig.new(config_file).params['mysql']
       dbh = Mysql.new(host=config['host'], user=config['username'], password=config['password']).select_db(config['database'])
     rescue => e
@@ -22,7 +22,7 @@ Puppet::Reports.register_report(:autoami) do
     dbh.query("SELECT ('dns_name', 'ami_group') FROM nodes").each_hash do |node|
       #This is much more efficient
       if node['dns_name'] == self.host
-        ami_group = node['admi_group']
+        ami_group = node['ami_group']
         found = true
         break
       end
@@ -34,11 +34,11 @@ Puppet::Reports.register_report(:autoami) do
 
       changed = metrics['resources']['changed']
       failed  = metrics['resources']['failed']
-    
+
       if changed > 0 and failed == 0
         #Generate the new AMI and terminate the instance
-        new_image = node.new_ami self.host, 
-          :manifest_version => self.configuration_version, 
+        new_image = node.new_ami self.host,
+          :manifest_version => self.configuration_version,
           :description => "#{group} Manifest version #{self.configuration_version}"
 
         dbh.query("SELECT image FROM groups WHERE name=#{ami_group}").each_hash do |agroup|

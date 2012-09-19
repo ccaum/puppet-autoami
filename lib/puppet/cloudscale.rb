@@ -5,9 +5,11 @@ module Puppet::CloudPack
     require 'parseconfig'
 
     def dbh
-      config_file = '/etc/cloudscale.conf'
+      return @dbh if @dbh
+
+      config_file = '/etc/autoami.conf'
       config = ParseConfig.new(config_file).params['mysql']
-      Mysql.new(host=config['host'], user=config['username'], password=config['password']).select_db(config['database'])
+      @dbh = Mysql.new(host=config['host'], user=config['username'], password=config['password']).select_db(config['database'])
     end
 
     def add_new_group_options(action)
@@ -46,11 +48,32 @@ module Puppet::CloudPack
 
       action.option '--region=' do
         summary 'EC2 region to launch the instances in'
+
+        default_to { 'us-east-1' }
       end
 
       action.option '--node-group=' do
         summary 'Console node group to add the instance to'
       end
+    end
+
+    def current_instances
+      nodes = Hash.new
+      dbh.query('SELECT * FROM nodes').each_hash do |node|
+        dns_name  = node['dns_name']
+        ami_group = node['ami_group']
+
+        unless instance = Puppet::Face[:node_aws, :current].list.find { |id,values| values['dns_name'] == dns_name }
+
+          Puppet.warning "Instance #{dns_name} no longer exists but never reported.  Removing from list. You might want to run autoami again"
+          dbh.query("DELETE FROM nodes WHERE dns_name='#{dns_name}'")
+          return
+        end
+
+        nodes[instance[1]['id']] = instance[1]
+      end
+
+      nodes
     end
 
     def load_ami_groups
@@ -70,9 +93,12 @@ module Puppet::CloudPack
         server = Puppet::Face[:node_aws, :current].create :region => props[:region],
           :keyname => props[:keyname],
           :image   => props[:image],
-          :type    => props[:type]
+          :type    => props[:type],
+          :tags    => 'Created-By-Tool=Autoami'
 
-        Puppet::Face[:node_aws, :current].init(server, {
+        dbh.query("INSERT INTO nodes ( dns_name, ami_group ) VALUES ( '#{server}', '#{agroup}')")
+
+        Puppet::Face[:node, :current].init(server, {
           :keyfile => props[:keyfile],
           :server  => props[:server],
           :login   => props[:login],
@@ -80,8 +106,6 @@ module Puppet::CloudPack
           :puppetagent_certname => server,
           :node_group => props[:node_group] }
         )
-
-        dbh.query("INSERT INTO nodes ( dns_name, ami_group ) VALUES ( '#{server}', '#{agroup}')")
       end
     end
 
@@ -122,7 +146,7 @@ module Puppet::CloudPack
         required
       end
 
-      action.option '--manifest_version=' do
+      action.option '--manifest-version=' do
         summary 'Puppet Manifest Version'
         description <<-EOT
           The Puppet Manifest version used to generate the AMI.
@@ -159,8 +183,6 @@ module Puppet::CloudPack
     end
 
     def images(options)
-      options = merge_default_options(options)
-
       Puppet.info "Connecting to #{options[:platform]} ..."
       connection =  create_connection(options)
       Puppet.info "Connecting to #{options[:platform]} ... Done"
@@ -171,8 +193,6 @@ module Puppet::CloudPack
     end
 
     def new_ami(server, options={})
-      options = merge_default_options(options)
-
       Puppet.info "Connecting to #{options[:platform]} ..."
       connection =  create_connection(options)
       Puppet.info "Connecting to #{options[:platform]} ... Done"
