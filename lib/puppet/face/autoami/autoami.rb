@@ -30,7 +30,19 @@ Puppet::Face.define :autoami, '0.0.1' do
       Puppet::CloudPack.load_ami_groups
     end
   end
-    
+
+  action :list do
+    summary 'List active instances'
+
+    when_invoked do
+      Puppet::CloudPack.current_instances
+    end
+
+    when_rendering :console do |result|
+      result.to_yaml
+    end
+  end
+
   action :groups do
     summary 'List autoami groups'
 
