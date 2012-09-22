@@ -7,7 +7,7 @@ module Puppet::CloudPack
     def dbh
       return @dbh if @dbh
 
-      config_file = '/etc/autoami.conf'
+      config_file = "#{Puppet['confdir']}/autoami.conf"
       config = ParseConfig.new(config_file).params['mysql']
       @dbh = Mysql.new(host=config['host'], user=config['username'], password=config['password']).select_db(config['database'])
     end

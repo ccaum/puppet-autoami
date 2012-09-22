@@ -10,7 +10,7 @@ Puppet::Reports.register_report(:autoami) do
 
   def process
     begin
-      config_file = '/etc/autoami.conf'
+      config_file = "#{Puppet['confdir']}/autoami.conf"
       config = ParseConfig.new(config_file).params['mysql']
       dbh = Mysql.new(host=config['host'], user=config['username'], password=config['password']).select_db(config['database'])
     rescue => e
