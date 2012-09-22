@@ -8,8 +8,18 @@ Puppet::Face.define :node_aws, '0.0.1' do
       Lists all available images owned by the account configured by fog
     EOT
 
+    Puppet::CloudPack.add_platform_option(self)
     when_invoked do |options|
       Puppet::CloudPack.images(options)
+    end
+
+    when_rendering :console do |images|
+      images.map do |name, properties|
+        "#{name}:\n" + \
+        properties.map do |pname,value|
+          "    #{pname}: #{value}"
+        end.join("\n")
+      end.join("\n")
     end
   end
 

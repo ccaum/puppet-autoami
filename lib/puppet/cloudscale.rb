@@ -187,9 +187,18 @@ module Puppet::CloudPack
       connection =  create_connection(options)
       Puppet.info "Connecting to #{options[:platform]} ... Done"
 
-      connection.images.all('Owner' => 'self').map do |image|
-        image.id
+      images_info = Hash.new
+      connection.images.all('Owner' => 'self').each do |image|
+        images_info[image.id] = { 'name'             => image.name,
+                     'architecture'     => image.architecture,
+                     'description'      => image.description,
+                     'state'            => image.state,
+                     'is_public'        => image.is_public,
+                     'root_device_type' => image.root_device_type
+                   }
       end
+
+      images_info
     end
 
     def new_ami(server, options={})
