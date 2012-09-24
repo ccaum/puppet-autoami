@@ -23,6 +23,26 @@ module Puppet::CloudPack
         required
       end
 
+      action.option '--enc-user=' do
+        summary 'The ENC user to authenticate as for classification'
+        required
+      end
+
+      action.option '--enc-pass=' do
+        summary 'The ENC user password to authenticate as for classification'
+        required
+      end
+
+      action.option '--enc-port=' do
+        summary 'The port to access the ENC on for classification'
+
+        default_to { '443' }
+      end
+
+      action.option '--enc-server=' do
+        summary 'The location of the ENC for classification'
+      end
+
       action.option '--keyname=' do
         summary 'The public keypair name to use'
         required
@@ -85,6 +105,11 @@ module Puppet::CloudPack
                                :keyfile => group['keyfile'],
                                :login   => group['login'],
                                :server  => group['server'],
+                               :node_group => group['node_group'],
+                               :enc_server => group['enc_server'],
+                               :enc_user   => group['enc_user'],
+                               :enc_pass   => group['enc_pass'],
+                               :enc_port   => group['enc_port'],
                                :region  => group['region']
         }
       end
@@ -103,9 +128,18 @@ module Puppet::CloudPack
           :server  => props[:server],
           :login   => props[:login],
           :install_script => 'autoami',
+          :enc_auth_user => props[:enc_user],
+          :enc_auth_passwd => props[:enc_pass],
+          :enc_port      => props[:enc_port],
+          :enc_server    => props[:enc_server],
+          :enc_ssl       => true,
           :puppetagent_certname => server,
           :node_group => props[:node_group] }
         )
+
+        Puppet.info 'Running puppet agent'
+        command_prefix = props[:login] == 'root' ? '' : 'sudo '
+        ssh_remote_execute(server, props[:login], "#{command_prefix} puppet agent -t", props[:keyfile])
       end
     end
 
@@ -119,6 +153,10 @@ module Puppet::CloudPack
                                :login   => group['login'],
                                :server  => group['server'],
                                :region  => group['region'],
+                               :enc_server => group['enc_server'],
+                               :enc_user   => group['enc_user'],
+                               :enc_pass   => group['enc_pass'],
+                               :enc_port   => group['enc_port'],
                                :node_group => group['node_group']
         }
       end
@@ -130,7 +168,9 @@ module Puppet::CloudPack
     end
 
     def new_group(group, options)
-      dbh.query("INSERT INTO groups ( name, image, type, keyname, keyfile, login, server, region, node_group) VALUES ( '#{group}', '#{options[:image]}', '#{options[:type]}', '#{options[:keyname]}', '#{options[:keyfile]}', '#{options[:login]}', '#{options[:server]}', '#{options[:region]}', '#{options[:node_group]}')")
+      enc_server = options[:enc_server] || options[:server]
+
+      dbh.query("INSERT INTO groups ( name, image, type, keyname, keyfile, login, server, region, node_group, enc_server, enc_port, enc_user, enc_pass) VALUES ( '#{group}', '#{options[:image]}', '#{options[:type]}', '#{options[:keyname]}', '#{options[:keyfile]}', '#{options[:login]}', '#{options[:server]}', '#{options[:region]}', '#{options[:node_group]}', '#{enc_server}', '#{options[:enc_port]}', '#{options[:enc_user]}', '#{options[:enc_pass]}')")
     end
 
     def add_new_ami_options(action)

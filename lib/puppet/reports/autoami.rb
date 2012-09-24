@@ -1,6 +1,8 @@
 require 'puppet'
 require 'puppet/face'
 require 'uri'
+require 'mysql'
+require 'parseconfig'
 
 Puppet::Reports.register_report(:autoami) do
 
@@ -19,7 +21,7 @@ Puppet::Reports.register_report(:autoami) do
 
     found = false
     ami_group = String.new
-    dbh.query("SELECT ('dns_name', 'ami_group') FROM nodes").each_hash do |node|
+    dbh.query("SELECT dns_name,ami_group FROM nodes").each_hash do |node|
       #This is much more efficient
       if node['dns_name'] == self.host
         ami_group = node['ami_group']
@@ -36,26 +38,29 @@ Puppet::Reports.register_report(:autoami) do
       failed  = metrics['resources']['failed']
 
       if changed > 0 and failed == 0
-        #Generate the new AMI and terminate the instance
+        #Generate the new AMI
         new_image = node.new_ami self.host,
           :manifest_version => self.configuration_version,
-          :description => "#{group} Manifest version #{self.configuration_version}"
+          :description => "#{ami_group} Manifest version #{self.configuration_version}"
 
-        dbh.query("SELECT image FROM groups WHERE name=#{ami_group}").each_hash do |agroup|
+        dbh.query("SELECT image FROM groups WHERE name='#{ami_group}'").each_hash do |agroup|
           old_image = agroup['image']
         end
 
-        dbh.query("UPDATE groups SET image=#{new_image} WHERE name=#{ami_group}")
-
         #Wait until we have our image built
         loop {
-          break if Puppet::Face[:node_aws, :current].images.include? new_image
+          images = Puppet::Face[:node_aws, :current].images
+          if images.keys.include?(new_image) and images[new_image]['state'] == 'available'
+            dbh.query("UPDATE groups SET image='#{new_image}' WHERE name='#{ami_group}'")
+            break
+          end
           sleep 1
         }
-
-        dbh.query("DELETE FROM nodes WHERE dns_name='#{self.host}'")
-        node.terminate self.host
       end
+
+      #Delete the host
+      dbh.query("DELETE FROM nodes WHERE dns_name='#{self.host}'")
+      Puppet::Face[:node_aws, :current].terminate self.host
     end
   end
 end

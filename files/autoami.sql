@@ -26,6 +26,10 @@ CREATE TABLE `groups` (
   `keyfile` varchar(255) NOT NULL,
   `login` varchar(255) NOT NULL,
   `server` varchar(255) NOT NULL,
+  `enc_server` varchar(255) NOT NULL,
+  `enc_user` varchar(255) NOT NULL,
+  `enc_pass` varchar(255) NOT NULL,
+  `enc_port` varchar(255) NOT NULL,
   `node_group` varchar(255) NOT NULL,
   `region` varchar(255) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

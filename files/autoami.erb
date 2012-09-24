@@ -7,10 +7,14 @@
 
   if grep certname $CONFDIR/puppet.conf
   then
-    sed  '/^.*certname.*=.*$/c  certname = <%= options[:puppetagent_certname] %>' $CONFDIR/puppet.conf
+    sed  '/^.*certname.*=.*$/c  certname = <%= options[:puppetagent_certname] %>' $CONFDIR/puppet.conf > /tmp/puppet.conf
+    mv /tmp/puppet.conf $CONFDIR/puppet.conf
   else
-    echo "  certname = <% options[:puppetagnt_certname] %>" >> $CONFDIR/puppet.conf
+    echo "  certname = <% options[:puppetagent_certname] %>" >> $CONFDIR/puppet.conf
   fi
 <% end %>
 
-puppet agent -t&
+puppet agent -t
+
+# The agent will exit 1, so we need to ensure we exit cleanly
+exit 0
