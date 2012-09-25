@@ -1,5 +1,5 @@
 name    'ccaum-autoami'
-version '1.0'
+version '0.5'
 source 'git://github.com/ccaum/puppet-autoami'
 author 'Carl Caum'
 license 'Apache 2.0'
