@@ -96,6 +96,26 @@ module Puppet::CloudPack
       nodes
     end
 
+    def get_props(group)
+      group_props = Hash.new
+      dbh.query("SELECT * FROM groups WHERE name='#{group}'").each_hash do |group|
+        group_props = { :image   => group['image'],
+                        :type    => group['type'],
+                        :keyname => group['keyname'],
+                        :keyfile => group['keyfile'],
+                        :login   => group['login'],
+                        :server  => group['server'],
+                        :node_group => group['node_group'],
+                        :enc_server => group['enc_server'],
+                        :enc_user   => group['enc_user'],
+                        :enc_pass   => group['enc_pass'],
+                        :enc_port   => group['enc_port'],
+                        :region  => group['region']
+        }
+      end
+      group_props
+    end
+
     def load_ami_groups
       groups_hash = Hash.new
       dbh.query('SELECT * FROM groups').each_hash do |group|
@@ -115,32 +135,38 @@ module Puppet::CloudPack
       end
 
       groups_hash.each do |agroup,props|
-        server = Puppet::Face[:node_aws, :current].create :region => props[:region],
-          :keyname => props[:keyname],
-          :image   => props[:image],
-          :type    => props[:type],
-          :tags    => 'Created-By-Tool=Autoami'
-
-        dbh.query("INSERT INTO nodes ( dns_name, ami_group ) VALUES ( '#{server}', '#{agroup}')")
-
-        Puppet::Face[:node, :current].init(server, {
-          :keyfile => props[:keyfile],
-          :server  => props[:server],
-          :login   => props[:login],
-          :install_script => 'autoami',
-          :enc_auth_user => props[:enc_user],
-          :enc_auth_passwd => props[:enc_pass],
-          :enc_port      => props[:enc_port],
-          :enc_server    => props[:enc_server],
-          :enc_ssl       => true,
-          :puppetagent_certname => server,
-          :node_group => props[:node_group] }
-        )
+        launch_instance agroup, props
 
         Puppet.info 'Running puppet agent'
         command_prefix = props[:login] == 'root' ? '' : 'sudo '
         ssh_remote_execute(server, props[:login], "#{command_prefix} puppet agent -t", props[:keyfile])
       end
+    end
+
+    def launch_instance(group, props)
+      server = Puppet::Face[:node_aws, :current].create :region => props[:region],
+        :keyname => props[:keyname],
+        :image   => props[:image],
+        :type    => props[:type],
+        :tags    => 'Created-By-Tool=Autoami'
+
+      dbh.query("INSERT INTO nodes ( dns_name, ami_group ) VALUES ( '#{server}', '#{group}')")
+
+      Puppet::Face[:node, :current].init(server, {
+        :keyfile => props[:keyfile],
+        :server  => props[:server],
+        :login   => props[:login],
+        :install_script => 'autoami',
+        :enc_auth_user => props[:enc_user],
+        :enc_auth_passwd => props[:enc_pass],
+        :enc_port      => props[:enc_port],
+        :enc_server    => props[:enc_server],
+        :enc_ssl       => true,
+        :puppetagent_certname => server,
+        :node_group => props[:node_group] }
+      )
+
+      server
     end
 
     def groups

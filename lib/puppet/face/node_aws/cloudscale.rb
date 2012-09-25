@@ -34,4 +34,21 @@ Puppet::Face.define :node_aws, '0.0.1' do
       Puppet::CloudPack.new_ami(server,options)
     end
   end
+
+  action :launch do
+    summary 'Launch an instance of an AutoAMI group'
+    description <<-EOT
+      Launch an instance of an AutoAMI group using the latest
+      AMI image
+    EOT
+
+    when_invoked do |group, options|
+      properties = Puppet::CloudPack.get_props(group)
+      Puppet::CloudPack.launch_instance(group, properties)
+    end
+
+    when_rendering :console do |value|
+      "Succesfully launched instance at #{value}"
+    end
+  end
 end

@@ -90,8 +90,8 @@ To get a list of all required information, use `puppet help autoami new_group`.
 
 To create a new group, use 
 ```
-puppet autoami new_group --enc-pass <enc_user_password> \
-  --enc-user <enc_user_password> \
+puppet autoami new_group --enc-user <enc_user_password> \
+  --enc-pass <enc_user_password> \
   --image <ami> \
   --keyfile </path/to/ec2/rsa/key/file> \
   --keyname <ec2_keyname> \
