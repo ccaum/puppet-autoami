@@ -88,7 +88,18 @@ Setting up a group
 
 To get a list of all required information, use `puppet help autoami new_group`.
 
-To create a new group, use `puppet autoami new_group --enc-pass <enc_user_password> --enc-user <enc_user_password> --image <ami> --keyfile </path/to/ec2/rsa/key/file> --keyname <ec2_keyname> --login <user_to_login_to_ami_instance_as> --node-group <group_in_console_to_add_instance_to> --server <puppet_master> --type <ec2_type> <name_of_group>`
+To create a new group, use 
+```
+puppet autoami new_group --enc-pass <enc_user_password> \
+  --enc-user <enc_user_password> \
+  --image <ami> \
+  --keyfile </path/to/ec2/rsa/key/file> \
+  --keyname <ec2_keyname> \
+  --login <user_to_login_to_ami_instance_as> \
+  --node-group <group_in_console_to_add_instance_to> \
+  --server <puppet_master> \
+  --type <ec2_type> <name_of_group>
+```
 
 This may seem like a lot of parameters, but you won't have to specify them again.
 
