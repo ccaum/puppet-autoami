@@ -3,7 +3,7 @@
 # of puppet-cloudpack
 
 <% if options[:puppetagent_certname] %>
-  export CONFDIR=`puppet --configprint confdir`
+  export CONFDIR=`puppet agent --configprint confdir`
 
   if grep certname $CONFDIR/puppet.conf
   then
