@@ -10,7 +10,7 @@
     sed  '/^.*certname.*=.*$/c  certname = <%= options[:puppetagent_certname] %>' $CONFDIR/puppet.conf > /tmp/puppet.conf
     mv /tmp/puppet.conf $CONFDIR/puppet.conf
   else
-    echo "  certname = <% options[:puppetagent_certname] %>" >> $CONFDIR/puppet.conf
+    echo "  certname = <%= options[:puppetagent_certname] %>" >> $CONFDIR/puppet.conf
   fi
 <% end %>
 
