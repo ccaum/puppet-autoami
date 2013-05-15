@@ -149,7 +149,7 @@ puppet autoami new_group --enc-user <enc_user_password> \
   --keyname <ec2_keyname> \
   --login <user_to_login_to_ami_instance_as> \
   --node-group <group_in_console_to_add_instance_to> \
-  --server <puppet_master> \
+  --puppetserver <puppet_master> \
   --type <ec2_type> <name_of_group>
 ```
 

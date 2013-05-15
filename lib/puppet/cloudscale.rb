@@ -62,7 +62,7 @@ module Puppet::CloudPack
         required
       end
 
-      action.option '--server=' do
+      action.option '--puppetserver=' do
         summary 'Puppet master server'
       end
 
@@ -194,9 +194,9 @@ module Puppet::CloudPack
     end
 
     def new_group(group, options)
-      enc_server = options[:enc_server] || options[:server]
+      enc_server = options[:enc_server] || options[:puppetserver]
 
-      dbh.query("INSERT INTO groups ( name, image, type, keyname, keyfile, login, server, region, node_group, enc_server, enc_port, enc_user, enc_pass) VALUES ( '#{group}', '#{options[:image]}', '#{options[:type]}', '#{options[:keyname]}', '#{options[:keyfile]}', '#{options[:login]}', '#{options[:server]}', '#{options[:region]}', '#{options[:node_group]}', '#{enc_server}', '#{options[:enc_port]}', '#{options[:enc_user]}', '#{options[:enc_pass]}')")
+      dbh.query("INSERT INTO groups ( name, image, type, keyname, keyfile, login, server, region, node_group, enc_server, enc_port, enc_user, enc_pass) VALUES ( '#{group}', '#{options[:image]}', '#{options[:type]}', '#{options[:keyname]}', '#{options[:keyfile]}', '#{options[:login]}', '#{options[:puppetserver]}', '#{options[:region]}', '#{options[:node_group]}', '#{enc_server}', '#{options[:enc_port]}', '#{options[:enc_user]}', '#{options[:enc_pass]}')")
     end
 
     def add_new_ami_options(action)
